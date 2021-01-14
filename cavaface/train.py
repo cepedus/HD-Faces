@@ -380,7 +380,7 @@ def main():
                 print("Perform Evaluation on %s, and Save Checkpoints..."%(','.join([vs[2] for vs in val_dataset])))
                 for vs in val_dataset:
                     acc, best_threshold, roc_curve = perform_val(EMBEDDING_SIZE, per_batch_size, backbone, vs[0], vs[1])
-                    x_coord = epoch+1 + (batch+1)*1.0/(len(train_loader)*1.0)
+                    x_coord = len(train_loader)*epoch + (batch+1)
                     buffer_val(writer, "%s"%(vs[2]), acc, best_threshold, roc_curve, x_coord)
                 
                     print("Epoch {}/{}, Evaluation: {}, Acc: {}, Best_Threshold: {}".format(x_coord, NUM_EPOCH, vs[2], acc, best_threshold))
