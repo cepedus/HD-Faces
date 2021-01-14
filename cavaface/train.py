@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import os
 import sys
 import time
@@ -155,7 +156,7 @@ def main():
 
     #======= model & loss & optimizer =======#
     BACKBONE_DICT = {'MobileFaceNet': MobileFaceNet,
-                     'ResNet_50': ResNet_50, 'ResNet_101': ResNet_101, 'ResNet_152': ResNet_152,
+                     'ResNet_50': ResNet_50, 'ResNet_101': ResNet_101, 'ResNet_152': ResNet_152, 'IR_SE_18': IR_SE_18,
                      'IR_50': IR_50, 'IR_100': IR_100, 'IR_101': IR_101, 'IR_152': IR_152, 'IR_185': IR_185, 'IR_200': IR_200,
                      'IR_SE_50': IR_SE_50, 'IR_SE_100': IR_SE_100, 'IR_SE_101': IR_SE_101, 'IR_SE_152': IR_SE_152, 'IR_SE_185': IR_SE_185, 'IR_SE_200': IR_SE_200,
                      'AttentionNet_IR_56': AttentionNet_IR_56,'AttentionNet_IRSE_56': AttentionNet_IRSE_56,'AttentionNet_IR_92': AttentionNet_IR_92,'AttentionNet_IRSE_92': AttentionNet_IRSE_92,
@@ -256,26 +257,26 @@ def main():
     print("{} Loss Generated".format(loss))
     print("=" * 60)
 
-    #optionally resume from a checkpoint
-    #BACKBONE_RESUME_ROOT = cfg['BACKBONE_RESUME_ROOT'] # the root to resume training from a saved checkpoint
-    #HEAD_RESUME_ROOT = cfg['HEAD_RESUME_ROOT']  # the root to resume training from a saved checkpoint
-    #IS_RESUME = cfg['IS_RESUME']
-    #if IS_RESUME:
-    #   print("=" * 60)
-    #    if os.path.isfile(BACKBONE_RESUME_ROOT):
-    #        print("Loading Backbone Checkpoint '{}'".format(BACKBONE_RESUME_ROOT))
-    #        loc = 'cuda:{}'.format(cfg['GPU'])
-    #        backbone.load_state_dict(torch.load(BACKBONE_RESUME_ROOT, map_location=loc))
-    #        if os.path.isfile(HEAD_RESUME_ROOT):
-    #        print("Loading Head Checkpoint '{}'".format(HEAD_RESUME_ROOT))
-    #            checkpoint = torch.load(HEAD_RESUME_ROOT, map_location=loc)
-    #            cfg['START_EPOCH'] = checkpoint['EPOCH']
-    #            head.load_state_dict(checkpoint['HEAD'])
-    #            optimizer.load_state_dict(checkpoint['OPTIMIZER'])
-    #            del(checkpoint)
-    #    else:
-    #        print("No Checkpoint Found at '{}' and '{}'. Please Have a Check or Continue to Train from Scratch".format(BACKBONE_RESUME_ROOT, HEAD_RESUME_ROOT))
-    #    print("=" * 60)
+    # optionally resume from a checkpoint
+    BACKBONE_RESUME_ROOT = cfg['BACKBONE_RESUME_ROOT'] # the root to resume training from a saved checkpoint
+    HEAD_RESUME_ROOT = cfg['HEAD_RESUME_ROOT']  # the root to resume training from a saved checkpoint
+    IS_RESUME = cfg['IS_RESUME']
+    if IS_RESUME:
+        print("=" * 60)
+        if os.path.isfile(BACKBONE_RESUME_ROOT):
+            print("Loading Backbone Checkpoint '{}'".format(BACKBONE_RESUME_ROOT))
+            loc = 'cuda:{}'.format(cfg['GPU'])
+            backbone.load_state_dict(torch.load(BACKBONE_RESUME_ROOT, map_location=loc))
+            if os.path.isfile(HEAD_RESUME_ROOT):
+                print("Loading Head Checkpoint '{}'".format(HEAD_RESUME_ROOT))
+                checkpoint = torch.load(HEAD_RESUME_ROOT, map_location=loc)
+                cfg['START_EPOCH'] = checkpoint['EPOCH']
+                head.load_state_dict(checkpoint['HEAD'])
+                optimizer.load_state_dict(checkpoint['OPTIMIZER'])
+                del(checkpoint)
+        else:
+            print("No Checkpoint Found at '{}' and '{}'. Please Have a Check or Continue to Train from Scratch".format(BACKBONE_RESUME_ROOT, HEAD_RESUME_ROOT))
+        print("=" * 60)
     
     ori_backbone = copy.deepcopy(backbone)
     if SYNC_BN:
@@ -379,30 +380,43 @@ def main():
                 print("Perform Evaluation on %s, and Save Checkpoints..."%(','.join([vs[2] for vs in val_dataset])))
                 for vs in val_dataset:
                     acc, best_threshold, roc_curve = perform_val(EMBEDDING_SIZE, per_batch_size, backbone, vs[0], vs[1])
-                    buffer_val(writer, "%s"%(vs[2]), acc, best_threshold, roc_curve, epoch + 1)
-                    writer.flush()
-                    print("Epoch {}/{}, Evaluation: {}, Acc: {}, Best_Threshold: {}".format(epoch + 1, NUM_EPOCH, vs[2], acc, best_threshold))
+                    x_coord = epoch+1 + (batch+1)*1.0/(len(train_loader)*1.0)
+                    buffer_val(writer, "%s"%(vs[2]), acc, best_threshold, roc_curve, x_coord)
+                
+                    print("Epoch {}/{}, Evaluation: {}, Acc: {}, Best_Threshold: {}".format(x_coord, NUM_EPOCH, vs[2], acc, best_threshold))
                 print("=" * 60)
 
-                print("=" * 60)
-                print("Save Checkpoint...")
-                if cfg['RANK'] % ngpus_per_node == 0:
-                    '''
-                    if epoch+1==cfg['NUM_EPOCH']:
-                        torch.save(backbone.module.state_dict(), os.path.join(MODEL_ROOT, "Backbone_{}_Epoch_{}_Time_{}_checkpoint.pth".format(BACKBONE_NAME, epoch + 1, get_time())))
-                        save_dict = {'EPOCH': epoch+1,
-                                    'HEAD': head.module.state_dict(),
-                                    'OPTIMIZER': optimizer.state_dict()}
-                        torch.save(save_dict, os.path.join(MODEL_ROOT, "Head_{}_Epoch_{}_Time_{}_checkpoint.pth".format(HEAD_NAME, epoch + 1, get_time())))
-                    '''
-                    ori_backbone.load_state_dict(backbone.module.state_dict())
-                    ori_backbone.eval()
-                    x = torch.randn(1,3,144,144).cuda()
-                    traced_cell = torch.jit.trace(ori_backbone, (x))
-                    torch.jit.save(traced_cell, os.path.join(MODEL_ROOT, "Epoch_{}_Time_{}_checkpoint.pth".format(epoch + 1, get_time())))
+                # print("=" * 60)
+                # print("Save Checkpoint...")
+                # if cfg['RANK'] % ngpus_per_node == 0:
+                #     '''
+                #     if epoch+1==cfg['NUM_EPOCH']:
+                #         torch.save(backbone.module.state_dict(), os.path.join(MODEL_ROOT, "Backbone_{}_Epoch_{}_Time_{}_checkpoint.pth".format(BACKBONE_NAME, epoch + 1, get_time())))
+                #         save_dict = {'EPOCH': epoch+1,
+                #                     'HEAD': head.module.state_dict(),
+                #                     'OPTIMIZER': optimizer.state_dict()}
+                #         torch.save(save_dict, os.path.join(MODEL_ROOT, "Head_{}_Epoch_{}_Time_{}_checkpoint.pth".format(HEAD_NAME, epoch + 1, get_time())))
+                #     '''
+                #     if USE_APEX:
+                #         ori_backbone = ori_backbone.half()
+                #     ori_backbone.load_state_dict(backbone.module.state_dict())
+                #     ori_backbone.eval()
+                #     x = torch.randn(1,3,112,112).cuda()
+                #     traced_cell = torch.jit.trace(ori_backbone, (x))
+                #     torch.jit.save(traced_cell, os.path.join(MODEL_ROOT, "Epoch_{}_Time_{}_checkpoint.pth".format(epoch + 1, get_time())))
                     
-            # sys.stdout.flush()
+            sys.stdout.flush()
             batch += 1 # batch index
+
+        # All batch are finished: save epoch model and head
+        print("=" * 60)
+        print("Save Checkpoint...")
+        save_dict = {'EPOCH': epoch+1,
+                    'HEAD': head.module.state_dict(),
+                    'OPTIMIZER': optimizer.state_dict()}
+        torch.save(save_dict, os.path.join(MODEL_ROOT, "Head_{}_Epoch_{}_Time_{}_checkpoint.pth".format(HEAD_NAME, epoch + 1, get_time())))
+        torch.save(backbone.module.state_dict(), os.path.join(MODEL_ROOT, "Backbone_{}_Epoch_{}_Time_{}_checkpoint.pth".format(BACKBONE_NAME, epoch + 1, get_time())))
+
         epoch_loss = losses.avg
         epoch_acc = top1.avg
         print("=" * 60)
@@ -410,15 +424,15 @@ def main():
                 'Training Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
                 'Training Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
                     epoch + 1, cfg['NUM_EPOCH'], loss = losses, top1 = top1, top5 = top5))
-        # sys.stdout.flush()
+        sys.stdout.flush()
         print("=" * 60)
         if cfg['RANK'] % ngpus_per_node == 0:
             writer.add_scalar("Training_Loss", epoch_loss, epoch + 1)
             writer.add_scalar("Training_Accuracy", epoch_acc, epoch + 1)
             writer.add_scalar("Top1", top1.avg, epoch+1)
             writer.add_scalar("Top5", top5.avg, epoch+1)
-
         writer.flush()
+        
     writer.close()
 
 
