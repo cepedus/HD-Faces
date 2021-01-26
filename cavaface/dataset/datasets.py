@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-import mxnet as mx
+#import mxnet as mx
 
 from PIL import Image
 from torchvision.transforms import Resize as torchResize
@@ -84,7 +84,7 @@ def read_samples_from_record(root_dir, record_dir, Train):
     return samples, classes, names, label2index
 
 class FaceDataset(Dataset):
-    def __init__(self, root_dir, record_dir, transform, Train=True):
+    def __init__(self, root_dir, record_dir, transform, train_in_lowres=False, Train=True):
         super(FaceDataset, self).__init__()
         self.transform = transform
         self.root_dir = root_dir
@@ -93,8 +93,21 @@ class FaceDataset(Dataset):
         print("Number of Sampels:{} Number of Classes: {}".format(len(self.imgs), len(self.classes)))
 
         self.isLowres = 'lowres' in record_dir
-        if self.isLowres:
+        self.isHighres = 'highres' in record_dir
+
+        if self.isHighres and train_in_lowres:
+            self.resizer = torchResize((32, 32))
+        
+        elif self.isHighres and not train_in_lowres:
+            self.resizer = None
+
+        elif self.isLowres and not train_in_lowres:
             self.resizer = torchResize((144, 144))
+        
+        elif self.isLowres and train_in_lowres:
+            self.resizer = torchResize((32, 32))
+        
+        
 
     def __getitem__(self, index):
         path, target = self.imgs[index]
@@ -104,12 +117,13 @@ class FaceDataset(Dataset):
         #sample = cv2.imread(path, cv2.IMREAD_COLOR)
         #sample = cv2.cvtColor(sample, cv2.COLOR_BGR2RGB)
         #sample = Image.fromarray(sample)
+        if self.resizer is not None:
+            sample = self.resizer(sample)
+    
         if self.transform is not None:
             sample = self.transform(sample)
         # For lowres images: upscale x4 to 36x36 --> 144x144
-        if self.isLowres:
-            sample = self.resizer(sample)
-        
+
         if self.train:
             return sample, target
         else:

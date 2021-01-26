@@ -1,5 +1,7 @@
 import torch
 import torchvision.transforms as transforms
+from torchvision.transforms import Resize as torchResize
+
 import torch.nn.functional as F
 
 from .verification import evaluate
@@ -33,7 +35,7 @@ def l2_norm(input, axis = 1):
     output = torch.div(input, norm)
     return output
 
-def get_val_pair(path, name):
+def get_val_pair(path, name, to_lowres=False):
     # same as original
     
     carray = bcolz.carray(rootdir = os.path.join(path, name), mode = 'r')
@@ -44,6 +46,11 @@ def get_val_pair(path, name):
     
     batch = batch[:,:,:,::-1]
     flipped = torch.tensor(batch.copy())
+
+    if to_lowres:
+        resizer = torchResize((32, 32))
+        cropped = resizer(cropped)
+        flipped = resizer(flipped)
  
     issame = np.load('{}/{}_list.npy'.format(path, name))
 
@@ -53,8 +60,8 @@ def get_val_pair(path, name):
     return [cropped, flipped], issame
 
 
-def get_val_data(data_path, data_set):
-    hres, hres_issame = get_val_pair(data_path, 'hres')  # le data_path est donné par le paramètre VAL_DATA_ROOT = 'proj_transverse_2020/hres_eval_pairs/'   dans le config.py
+def get_val_data(data_path, data_set, to_lowres=False):
+    hres, hres_issame = get_val_pair(data_path, 'hres', to_lowres)  # le data_path est donné par le paramètre VAL_DATA_ROOT = 'proj_transverse_2020/hres_eval_pairs/'   dans le config.py
     return [[hres, hres_issame, 'idemia']]
     # val_data = []
     # data_set =  data_set.strip().split(',')

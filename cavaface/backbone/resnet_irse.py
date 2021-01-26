@@ -74,7 +74,7 @@ def get_blocks(num_layers):
 class Backbone(Module):
     def __init__(self, input_size, num_layers, mode='ir'):
         super(Backbone, self).__init__()
-        assert input_size[0] in [112, 224, 144], "input_size should be [112, 112] or [224, 224]"
+        assert input_size[0] in [32, 112, 224, 144], "input_size should be [112, 112] or [224, 224]"
         assert num_layers in [18, 50, 100, 101, 152, 185, 200], "num_layers should be 50, 100 or 152"
         assert mode in ['ir', 'ir_se'], "mode should be ir or ir_se"
         blocks = get_blocks(num_layers)
@@ -85,24 +85,30 @@ class Backbone(Module):
         self.input_layer = Sequential(Conv2d(3, 64, (3, 3), 1, 1, bias=False),
                                       BatchNorm2d(64),
                                       PReLU(64))
-        if input_size[0] == 112:
+        # if input_size[0] == 112:
+        #     self.output_layer = Sequential(BatchNorm2d(512),
+        #                                    Dropout(0.4),
+        #                                    Flatten(),
+        #                                    Linear(512 * 7 * 7, 512),
+        #                                    BatchNorm1d(512, affine=False))
+        if input_size[0] == 32:
             self.output_layer = Sequential(BatchNorm2d(512),
                                            Dropout(0.4),
                                            Flatten(),
-                                           Linear(512 * 7 * 7, 512),
-                                           BatchNorm1d(512, affine=False))
+                                           Linear(512 * 2 * 2, 128),
+                                           BatchNorm1d(128, affine=False))
         elif input_size[0] == 144:
             self.output_layer = Sequential(BatchNorm2d(512),
                                            Dropout(0.4),
                                            Flatten(),
                                            Linear(512 * 9 * 9, 128),
                                            BatchNorm1d(128, affine=False))
-        else:
-            self.output_layer = Sequential(BatchNorm2d(512),
-                                           Dropout(0.4),
-                                           Flatten(),
-                                           Linear(512 * 14 * 14, 512),
-                                           BatchNorm1d(512, affine=False))
+        # else:
+        #     self.output_layer = Sequential(BatchNorm2d(512),
+        #                                    Dropout(0.4),
+        #                                    Flatten(),
+        #                                    Linear(512 * 14 * 14, 512),
+        #                                    BatchNorm1d(512, affine=False))
 
         modules = []
         for block in blocks:

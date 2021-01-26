@@ -5,7 +5,7 @@ configurations = {
         SEED = 1337, # random seed for reproduce results
         
         DATA_ROOT = '../data', # the parent root where your train/val/test data are stored
-        DATA_RECORD = '../data/lowres_ids.txt', # the parent root where your train/val/test data are stored
+        DATA_RECORD = '../data/highres_ids.txt', # the parent root where your train/val/test data are stored
         VAL_DATA_ROOT = '../data/hres_eval_pairs', # the parent root where your val/test data are stored
         # VAL_SET = 'lfw, cfp_fp, agedb_30, vgg2_fp', # validation set name
         VAL_SET = 'pairs_hres', # validation set name
@@ -14,6 +14,13 @@ configurations = {
         IS_RESUME = False,
         BACKBONE_RESUME_ROOT = "",
         HEAD_RESUME_ROOT = "",
+
+        VAL_IN_LOWRES = True, # Whether to train in 32x32 ou 144x144
+        EVAL_FREQ = 2000, # when VAL_IN_LOWRES and highres training, put less than 1000
+
+
+        # IMPORTANT: with VAL_IN_LOWRES, INPUT_SIZE is defined internally in train.py
+        # INPUT_SIZE = [32, 32], # support: [32, 32] [112, 112], [144, 144] and [224, 224]
         
         BACKBONE_NAME = 'IR_SE_18', # support: ['MobileFaceNet', 'ResNet_50', 'ResNet_101', 'ResNet_152', 
                                 #'IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_100', 'IR_SE_101', 'IR_SE_152',
@@ -22,12 +29,11 @@ configurations = {
         HEAD_NAME = "ArcFace", # support:  ['Softmax', 'ArcFace', 'CosFace', 'SphereFace', 'Am_softmax', 'ArcNegFace', 'CurricularFace', 'SVX']
         LOSS_NAME = 'Softmax', # support: [''Softmax', Focal', 'HardMining', 'LabelSmooth', 'Softplus']
         
-        INPUT_SIZE = [144, 144], # support: [112, 112], [144, 144] and [224, 224]
+        
         RGB_MEAN = [0.5, 0.5, 0.5], # for normalize inputs to [-1, 1]
         RGB_STD = [0.5, 0.5, 0.5],
         EMBEDDING_SIZE = 128, # feature dimension ## HARDCODED IN RESNET
         BATCH_SIZE = 10,
-        EVAL_FREQ = 2000, #for ms1m, batch size 1024, EVAL_FREQ=2000
         DROP_LAST = True, # whether drop the last batch to ensure consistent batch_norm statistics
         
         OPTIMIZER = 'sgd', # sgd, adam, lookahead, radam, ranger, adamp, sgdp

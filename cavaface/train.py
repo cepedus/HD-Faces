@@ -62,14 +62,14 @@ def main():
         cfg['GPU'] = cfg['GPU'][0]
         world_size = cfg['WORLD_SIZE']
         cfg['WORLD_SIZE'] = ngpus_per_node * world_size
-
         cfg['GPU'] = 'cuda'
+
     else:
         ngpus_per_node = 1
         device = torch.device('cpu')
         cfg['GPU'] = 'cpu'
         
-    val_dataset = get_val_data(cfg['VAL_DATA_ROOT'], cfg['VAL_SET'])
+    val_dataset = get_val_data(cfg['VAL_DATA_ROOT'], cfg['VAL_SET'], cfg['VAL_IN_LOWRES'])
     # mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, cfg, val_dataset))
 
     SEED = cfg['SEED'] # random seed for reproduce results
@@ -138,7 +138,7 @@ def main():
     print(train_transform)
     print("Train Transform Generated")
     print("=" * 60)
-    dataset_train = FaceDataset(DATA_ROOT, RECORD_DIR, train_transform)
+    dataset_train = FaceDataset(DATA_ROOT, RECORD_DIR, train_transform, train_in_lowres=cfg['VAL_IN_LOWRES'])
 
     # dataset_train = MXFaceDataset(DATA_ROOT, train_transform)
     # train_sampler = torch.utils.data.distributed.DistributedSampler(dataset_train)
@@ -166,7 +166,10 @@ def main():
                     } #'HRNet_W30': HRNet_W30, 'HRNet_W32': HRNet_W32, 'HRNet_W40': HRNet_W40, 'HRNet_W44': HRNet_W44, 'HRNet_W48': HRNet_W48, 'HRNet_W64': HRNet_W64
 
     BACKBONE_NAME = cfg['BACKBONE_NAME']
-    INPUT_SIZE = cfg['INPUT_SIZE']
+    # INPUT_SIZE = cfg['INPUT_SIZE']
+
+    INPUT_SIZE = [32, 32] if cfg['VAL_IN_LOWRES'] else [144, 144]
+
     # assert INPUT_SIZE == [112, 112]
     backbone = BACKBONE_DICT[BACKBONE_NAME](INPUT_SIZE)
     print("=" * 60)

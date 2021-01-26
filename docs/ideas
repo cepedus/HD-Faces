@@ -1,0 +1,26 @@
+Ce qu'on a:
+A) Resnet + ArcFace (1M images lowres 32x32 -> 144x144 50K ids) --> embedding 128 
+| EVAL highres_eval_pairs 144x144
+| META temps d'entraînement, best_threshold
+
+
+Train:
+B) Resnet + ArcFace (10K images highres 144x144) --> embedding 128 
+| EVAL highres_eval_pairs 144x144
+
+C) Resnet + ArcFace (1M images lowres 32x32) --> embedding 128 
+| EVAL highres_eval_pairs 144x144 -> 32x32
+
+D) Resnet + ArcFace (10K images highres 144x144 -> 32x32) --> embedding 128 
+| EVAL highres_eval_pairs 144x144 -> 32x32
+
+
+Après:
+E) +[A) freeze Resnet and B) freeze Resnet] then train Arcface, 
+| comparer diff(acc(A), acc(B), acc(E))
+
+F) +[Resnet trainable low_res + B) freeze Resnet high_res] then train Arcface,
+| comparer diff(acc(.), acc(F))
+
+G) +[Resnet trainable low_res + D) freeze Resnet high_res] then train Arcface,
+| comparer diff(acc(.), acc(G))
