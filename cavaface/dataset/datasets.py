@@ -107,7 +107,8 @@ class FaceDataset(Dataset):
         elif self.isLowres and train_in_lowres:
             self.resizer = torchResize((32, 32))
         
-        
+        # self.resizer = torchResize((32, 32))
+        # self.resizer2 = torchResize((144, 144))
 
     def __getitem__(self, index):
         path, target = self.imgs[index]
@@ -119,6 +120,7 @@ class FaceDataset(Dataset):
         #sample = Image.fromarray(sample)
         if self.resizer is not None:
             sample = self.resizer(sample)
+            # sample = self.resizer2(sample)
     
         if self.transform is not None:
             sample = self.transform(sample)
@@ -128,6 +130,84 @@ class FaceDataset(Dataset):
             return sample, target
         else:
             return sample, target, self.names[index]
+
+    def __len__(self):
+        return len(self.imgs)
+
+    def get_sample_num_of_each_class(self):
+        sample_num = []
+        for label in self.classes:
+            sample_num.append(len(self.label_to_indexes[label]))
+        return sample_num
+
+class FaceDataset2Sizes(Dataset):
+    def __init__(self, root_dir, record_dir, transform, train_in_lowres1=False, train_in_lowres2=False, Train=True):
+        super(FaceDataset2Sizes, self).__init__()
+        self.transform = transform
+        self.root_dir = root_dir
+        self.train = Train
+        self.imgs, self.classes, self.names, self.label_to_indexes = read_samples_from_record(root_dir, record_dir, Train=Train)
+        print("Number of Sampels:{} Number of Classes: {}".format(len(self.imgs), len(self.classes)))
+
+        self.isLowres = 'lowres' in record_dir
+        self.isHighres = 'highres' in record_dir
+
+        if self.isHighres and train_in_lowres1:
+            self.resizer1 = torchResize((32, 32))
+        
+        elif self.isHighres and not train_in_lowres1:
+            self.resizer1 = None
+
+        elif self.isLowres and not train_in_lowres1:
+            self.resizer1 = torchResize((144, 144))
+        
+        elif self.isLowres and train_in_lowres1:
+            self.resizer1 = torchResize((32, 32))
+
+
+
+
+        if self.isHighres and train_in_lowres2:
+            self.resizer2 = torchResize((32, 32))
+        
+        elif self.isHighres and not train_in_lowres2:
+            self.resizer2 = None
+
+        elif self.isLowres and not train_in_lowres2:
+            self.resizer2 = torchResize((144, 144))
+        
+        elif self.isLowres and train_in_lowres2:
+            self.resizer2 = torchResize((32, 32))
+        
+        
+
+    def __getitem__(self, index):
+        path, target = self.imgs[index]
+        sample = Image.open(path)
+        sample = sample.convert("RGB")
+        #using opencv
+        #sample = cv2.imread(path, cv2.IMREAD_COLOR)
+        #sample = cv2.cvtColor(sample, cv2.COLOR_BGR2RGB)
+        #sample = Image.fromarray(sample)
+        if self.resizer1 is not None:
+            sample1 = self.resizer1(sample)
+
+        if self.resizer2 is not None:
+            sample2 = self.resizer2(sample)
+    
+        if self.transform is not None:
+            try:
+                sample1 = self.transform(sample1)
+                sample2 = self.transform(sample2)
+            except UnboundLocalError:
+                sample1 = self.transform(sample)
+                sample2 = self.transform(sample)
+        # For lowres images: upscale x4 to 36x36 --> 144x144
+
+        if self.train:
+            return [sample1, sample2], target
+        else:
+            return [sample1, sample2], target, self.names[index]
 
     def __len__(self):
         return len(self.imgs)

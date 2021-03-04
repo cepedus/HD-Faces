@@ -1,0 +1,13 @@
+# Réunion 9 Février:
+
+- Scheduler modified to multi-step to reduce LR more rapidly
+- In DEBUG logs, curves have different BATCH_SIZE so they don't last all the same number of steps
+
+## How to see if it worked?
+- See if centroids of lowres and highres are separable (LDA) (ideally: no)
+- What is specifically Top1 and Top5?
+- Testing inference mode: Does highres->36x36->prediction (lowres_32) works the same as highres->prediction (lowres_144)?
+
+## Finetuning
+- Keep head from training, freeze backbone
+- Explore only head finetuning vs. feature concatenation

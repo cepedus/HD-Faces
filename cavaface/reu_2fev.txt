@@ -1,0 +1,21 @@
+Réunion 2/02:
+- backbone_lowres + backbone_highres --> freeze --> ArcFace
+- freeze last layers of backbone to finetune (OK)
+
+Analysis
+- histograme de score
+- similarité cosine
+
+-------------------------------
+
+modèles disponibles (checkpoints):
+
+lowres_32: entraîné sur LOWRES 32x32
+
+lowres_144: entraîné sur LOWRES upscalé sur 144x144
+
+
+EVAL:
+(OK) lowres_32 avec HIGHRES downscalé vers 32x32 
+(OK) lowres_144 avec HIGHRES downscalé vers 32x32 upscalé vers 144x144
+(OK) lowres_144 avec HIGHRES 144x144

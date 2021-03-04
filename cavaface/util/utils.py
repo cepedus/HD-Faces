@@ -154,6 +154,81 @@ def perform_val(embedding_size, batch_size, backbone, carray, issame, nrof_folds
     backbone.train()
     return accuracy.mean(), best_thresholds.mean(), roc_curve_tensor
 
+def perform_val2(embedding_size, batch_size, backbone1, backbone2, carray, issame, nrof_folds = 10, tta = True):
+    backbone1.eval() # switch to evaluation mode
+    backbone2.eval() # switch to evaluation mode
+
+    idx = 0
+    shape = carray[0].shape
+    embeddings = np.zeros([shape[0] , embedding_size])
+    with torch.no_grad():
+        while idx + batch_size <= shape[0]:
+            if tta:
+                cropped = carray[0][idx:idx + batch_size]
+                flipped = carray[1][idx:idx + batch_size]
+                emb_batch1 = backbone1(cropped.cuda()).cpu() + backbone1(flipped.cuda()).cpu()
+                emb_batch2 = backbone2(cropped.cuda()).cpu() + backbone2(flipped.cuda()).cpu()
+                embeddings[idx:idx + batch_size] = l2_norm(emb_batch1+emb_batch2)
+            else:
+                ccropped = carray[0][idx:idx + batch_size]
+                embeddings[idx:idx + batch_size] = l2_norm(backbone1(ccropped.cuda())+backbone2(ccropped.cuda())).cpu()
+            idx += batch_size
+        if idx < shape[0]:
+            if tta:
+                cropped = carray[0][idx:,:,:,:]
+                flipped = carray[1][idx:,:,:,:]
+                emb_batch1 = backbone1(cropped.cuda()).cpu() + backbone1(flipped.cuda()).cpu()
+                emb_batch2 = backbone2(cropped.cuda()).cpu() + backbone2(flipped.cuda()).cpu()
+                embeddings[idx:] = l2_norm(emb_batch1+emb_batch2)#[0:shape[0]-idx])
+            else:
+                ccropped = carray[0][idx:,:,:,:]
+                embeddings[idx:] = l2_norm(backbone1(ccropped.cuda())+backbone2(ccropped.cuda())).cpu()
+    tpr, fpr, accuracy, best_thresholds, bad_case = evaluate(embeddings, issame, nrof_folds)
+    buf = gen_plot(fpr, tpr)
+    roc_curve = Image.open(buf)
+    roc_curve_tensor = transforms.ToTensor()(roc_curve)
+    backbone1.train()
+    backbone2.train()
+    return accuracy.mean(), best_thresholds.mean(), roc_curve_tensor
+
+
+def perform_val_backbone(embedding_size, batch_size, backbone, carray, issame, nrof_folds = 10, tta = False, samples=200):
+    backbone.eval() # switch to evaluation mode
+
+    idx = 0
+    shape = carray[0].shape
+    number_sample  = samples
+    embeddings = np.zeros([number_sample , embedding_size])
+    with torch.no_grad():
+        while idx + batch_size <= number_sample:
+            # print(idx)
+            if tta:
+                cropped = carray[0][idx:idx + batch_size]
+                flipped = carray[1][idx:idx + batch_size]
+                emb_batch = backbone(cropped).cpu() + backbone(flipped).cpu()
+                embeddings[idx:idx + batch_size] = l2_norm(emb_batch)
+            else:
+                ccropped = carray[0][idx:idx + batch_size]
+                embeddings[idx:idx + batch_size] = l2_norm(backbone(ccropped)).cpu()
+                
+            idx += batch_size
+        if idx < number_sample:
+            if tta:
+                cropped = carray[0][idx:,:,:,:]
+                flipped = carray[1][idx:,:,:,:]
+                emb_batch = backbone(cropped).cpu() + backbone(flipped).cpu()
+                embeddings[idx:] = l2_norm(emb_batch)#[0:shape[0]-idx])
+            else:
+                ccropped = carray[0][idx:,:,:,:]
+                embeddings[idx:] = l2_norm(backbone(ccropped)).cpu()
+    #tpr, fpr, accuracy, best_thresholds, bad_case = evaluate(embeddings, issame, nrof_folds)
+    #buf = gen_plot(fpr, tpr)
+    #roc_curve = Image.open(buf)
+    #roc_curve_tensor = transforms.ToTensor()(roc_curve)
+    #backbone.train()
+    return torch.from_numpy(embeddings)
+    #return accuracy.mean(), best_thresholds.mean(), roc_curve_tensor
+
 def buffer_val(writer, db_name, acc, best_threshold, roc_curve_tensor, epoch):
     writer.add_scalar('{}_Accuracy'.format(db_name), acc, epoch)
     writer.add_scalar('{}_Best_Threshold'.format(db_name), best_threshold, epoch)
