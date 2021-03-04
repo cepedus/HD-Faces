@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 #import mxnet as mx
+import copy
 
 from PIL import Image
 from torchvision.transforms import Resize as torchResize
@@ -152,6 +153,9 @@ class FaceDataset2Sizes(Dataset):
         self.isLowres = 'lowres' in record_dir
         self.isHighres = 'highres' in record_dir
 
+        self.transforms1 = copy.deepcopy(self.transform) if self.transform is not None else None
+        self.transforms2 = copy.deepcopy(self.transform) if self.transform is not None else None
+
         if self.isHighres and train_in_lowres1:
             self.resizer1 = torchResize((32, 32))
         
@@ -191,17 +195,18 @@ class FaceDataset2Sizes(Dataset):
         #sample = Image.fromarray(sample)
         if self.resizer1 is not None:
             sample1 = self.resizer1(sample)
+        else:
+            sample1 = sample
 
         if self.resizer2 is not None:
             sample2 = self.resizer2(sample)
+        else:
+            sample2 = sample
     
-        if self.transform is not None:
-            try:
-                sample1 = self.transform(sample1)
-                sample2 = self.transform(sample2)
-            except UnboundLocalError:
-                sample1 = self.transform(sample)
-                sample2 = self.transform(sample)
+        if self.transforms1 is not None:
+            sample1 = self.transforms1(sample1)
+        if self.transforms2 is not None:
+            sample2 = self.transforms2(sample2)
         # For lowres images: upscale x4 to 36x36 --> 144x144
 
         if self.train:

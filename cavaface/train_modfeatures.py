@@ -69,7 +69,7 @@ def main():
         device = torch.device('cpu')
         cfg['GPU'] = 'cpu'
         
-    val_dataset = get_val_data(cfg['VAL_DATA_ROOT'], cfg['VAL_SET'], cfg['VAL_IN_LOWRES1'])
+    val_dataset = get_val_data2(cfg['VAL_DATA_ROOT'], cfg['VAL_SET'], cfg['VAL_IN_LOWRES1'], cfg['VAL_IN_LOWRES2'])
     # mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, cfg, val_dataset))
 
     SEED = cfg['SEED'] # random seed for reproduce results
@@ -441,6 +441,7 @@ def main():
                 print("=" * 60)
                 print("Perform Evaluation on %s, and Save Checkpoints..."%(','.join([vs[2] for vs in val_dataset])))
                 for vs in val_dataset:
+                    # vs = [[hres1, hres2], hres_issame, 'idemia2']
                     acc, best_threshold, roc_curve = perform_val2(EMBEDDING_SIZE, per_batch_size, backbone1, backbone2, vs[0], vs[1])
                     x_coord = len(train_loader)*epoch + (batch+1)
                     buffer_val(writer, "%s"%(vs[2]), acc, best_threshold, roc_curve, x_coord)
@@ -477,7 +478,8 @@ def main():
                     'HEAD': head.module.state_dict(),
                     'OPTIMIZER': optimizer.state_dict()}
         torch.save(save_dict, os.path.join(MODEL_ROOT, "Head_{}_Epoch_{}_Time_{}_checkpoint.pth".format(HEAD_NAME, epoch + 1, get_time())))
-        # torch.save(backbone.module.state_dict(), os.path.join(MODEL_ROOT, "Backbone_{}_Epoch_{}_Time_{}_checkpoint.pth".format(BACKBONE_NAME, epoch + 1, get_time())))
+        torch.save(backbone1.module.state_dict(), os.path.join(MODEL_ROOT, "Backbone1_{}_Epoch_{}_Time_{}_checkpoint.pth".format(BACKBONE_NAME1, epoch + 1, get_time())))
+        torch.save(backbone2.module.state_dict(), os.path.join(MODEL_ROOT, "Backbone2_{}_Epoch_{}_Time_{}_checkpoint.pth".format(BACKBONE_NAME2, epoch + 1, get_time())))
 
         epoch_loss = losses.avg
         epoch_acc = top1.avg

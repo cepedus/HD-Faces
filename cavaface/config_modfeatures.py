@@ -13,12 +13,12 @@ configurations = {
         LOG_ROOT = '../debug/logs', # the root to log your train/val status
         IS_RESUME = True, # MUST BE TRUE
         BACKBONE_RESUME_ROOT1 = "../debug/debug_lowres_144/model/Backbone_IR_SE_18_Epoch_11_Time_2021-01-29-14-12_checkpoint.pth",
-        BACKBONE_RESUME_ROOT2 = "../debug/debug_highres_144/model/Backbone_IR_SE_18_Epoch_12_Time_2021-02-02-18-35_checkpoint.pth",
+        BACKBONE_RESUME_ROOT2 = "../debug/debug_lowres_32/model/Backbone_IR_SE_18_Epoch_12_Time_2021-02-01-19-14_checkpoint.pth",
         HEAD_RESUME_ROOT = "",
 
         VAL_IN_LOWRES1 = False, # Whether to train in 32x32 ou 144x144
-        VAL_IN_LOWRES2 = False, # Whether to train in 32x32 ou 144x144
-        EVAL_FREQ = 2000, # when VAL_IN_LOWRES and highres training, put less than 1000
+        VAL_IN_LOWRES2 = True, # Whether to train in 32x32 ou 144x144
+        EVAL_FREQ = 500, # when VAL_IN_LOWRES and highres training, put less than 1000
 
 
         # IMPORTANT: with VAL_IN_LOWRES, INPUT_SIZE is defined internally in train.py

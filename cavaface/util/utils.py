@@ -59,6 +59,48 @@ def get_val_pair(path, name, to_lowres=False):
 
     return [cropped, flipped], issame
 
+def get_val_pair2(path, name, to_lowres1=False, to_lowres2=False):
+    # same as original
+    
+    carray = bcolz.carray(rootdir = os.path.join(path, name), mode = 'r')
+    batch = np.array(carray)
+    
+    batch = batch[:,::-1,:,:]
+    cropped = torch.tensor(batch.copy())
+    
+    batch = batch[:,:,:,::-1]
+    flipped = torch.tensor(batch.copy())
+
+    if to_lowres1:
+        resizer1 = torchResize((32, 32))
+        cropped1 = resizer1(cropped)
+        flipped1 = resizer1(flipped)
+    else:
+        cropped1 = cropped
+        flipped1 = flipped
+
+    if to_lowres2:
+        resizer2 = torchResize((32, 32))
+        cropped2 = resizer2(cropped)
+        flipped2 = resizer2(flipped)
+    else:
+        cropped2 = cropped
+        flipped2 = flipped
+
+
+ 
+    issame = np.load('{}/{}_list.npy'.format(path, name))
+
+    # print("loading %s done"%(name), cropped.size())
+    #sys.stdout.flush()
+
+    return [[cropped1, flipped1], [cropped2, flipped2]], issame
+
+def get_val_data2(data_path, data_set, to_lowres1=False, to_lowres2=False):
+    [hres1, hres2], hres_issame = get_val_pair2(data_path, 'hres', to_lowres1=to_lowres1, to_lowres2=to_lowres2)  # le data_path est donné par le paramètre VAL_DATA_ROOT = 'proj_transverse_2020/hres_eval_pairs/'   dans le config.py
+    return [[[hres1, hres2], hres_issame, 'idemia2']]
+    # val_data = []
+
 
 def get_val_data(data_path, data_set, to_lowres=False):
     hres, hres_issame = get_val_pair(data_path, 'hres', to_lowres)  # le data_path est donné par le paramètre VAL_DATA_ROOT = 'proj_transverse_2020/hres_eval_pairs/'   dans le config.py
@@ -155,34 +197,44 @@ def perform_val(embedding_size, batch_size, backbone, carray, issame, nrof_folds
     return accuracy.mean(), best_thresholds.mean(), roc_curve_tensor
 
 def perform_val2(embedding_size, batch_size, backbone1, backbone2, carray, issame, nrof_folds = 10, tta = True):
+    #perform_val2(EMBEDDING_SIZE, per_batch_size, backbone1, backbone2, vs[0], vs[1])
     backbone1.eval() # switch to evaluation mode
     backbone2.eval() # switch to evaluation mode
 
+    carray1 = carray[0]
+    carray2 = carray[1]
+
     idx = 0
-    shape = carray[0].shape
+    shape = carray1[0].shape
     embeddings = np.zeros([shape[0] , embedding_size])
     with torch.no_grad():
         while idx + batch_size <= shape[0]:
             if tta:
-                cropped = carray[0][idx:idx + batch_size]
-                flipped = carray[1][idx:idx + batch_size]
-                emb_batch1 = backbone1(cropped.cuda()).cpu() + backbone1(flipped.cuda()).cpu()
-                emb_batch2 = backbone2(cropped.cuda()).cpu() + backbone2(flipped.cuda()).cpu()
+                cropped1 = carray1[0][idx:idx + batch_size]
+                flipped1 = carray1[1][idx:idx + batch_size]
+                cropped2 = carray2[0][idx:idx + batch_size]
+                flipped2 = carray2[1][idx:idx + batch_size]
+                emb_batch1 = backbone1(cropped1.cuda()).cpu() + backbone1(flipped1.cuda()).cpu()
+                emb_batch2 = backbone2(cropped2.cuda()).cpu() + backbone2(flipped2.cuda()).cpu()
                 embeddings[idx:idx + batch_size] = l2_norm(emb_batch1+emb_batch2)
             else:
-                ccropped = carray[0][idx:idx + batch_size]
-                embeddings[idx:idx + batch_size] = l2_norm(backbone1(ccropped.cuda())+backbone2(ccropped.cuda())).cpu()
+                ccropped1 = carray1[0][idx:idx + batch_size]
+                ccropped2 = carray2[0][idx:idx + batch_size]
+                embeddings[idx:idx + batch_size] = l2_norm(backbone1(ccropped1.cuda())+backbone2(ccropped2.cuda())).cpu()
             idx += batch_size
         if idx < shape[0]:
             if tta:
-                cropped = carray[0][idx:,:,:,:]
-                flipped = carray[1][idx:,:,:,:]
-                emb_batch1 = backbone1(cropped.cuda()).cpu() + backbone1(flipped.cuda()).cpu()
-                emb_batch2 = backbone2(cropped.cuda()).cpu() + backbone2(flipped.cuda()).cpu()
+                cropped1 = carray1[0][idx:,:,:,:]
+                flipped1 = carray1[1][idx:,:,:,:]
+                cropped2 = carray2[0][idx:,:,:,:]
+                flipped2 = carray2[1][idx:,:,:,:]
+                emb_batch1 = backbone1(cropped1.cuda()).cpu() + backbone1(flipped1.cuda()).cpu()
+                emb_batch2 = backbone2(cropped2.cuda()).cpu() + backbone2(flipped2.cuda()).cpu()
                 embeddings[idx:] = l2_norm(emb_batch1+emb_batch2)#[0:shape[0]-idx])
             else:
-                ccropped = carray[0][idx:,:,:,:]
-                embeddings[idx:] = l2_norm(backbone1(ccropped.cuda())+backbone2(ccropped.cuda())).cpu()
+                ccropped1 = carray2[0][idx:,:,:,:]
+                ccropped1 = carray2[0][idx:,:,:,:]
+                embeddings[idx:] = l2_norm(backbone1(ccropped1.cuda())+backbone2(ccropped2.cuda())).cpu()
     tpr, fpr, accuracy, best_thresholds, bad_case = evaluate(embeddings, issame, nrof_folds)
     buf = gen_plot(fpr, tpr)
     roc_curve = Image.open(buf)
