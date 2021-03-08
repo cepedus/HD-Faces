@@ -57,8 +57,8 @@ def main():
     cfg = configurations[1]
 
 
-    VAL_DATA_ROOT = cfg['VAL_DATA_ROOT']
-    VAL_SET = cfg['VAL_SET']
+    # VAL_DATA_ROOT = cfg['VAL_DATA_ROOT']
+    # VAL_SET = cfg['VAL_SET']
     VAL_IN_LOWRES = cfg['VAL_IN_LOWRES']
     INPUT_SIZE = [32, 32] if VAL_IN_LOWRES else [144, 144]
     
@@ -96,7 +96,7 @@ def main():
     per_batch_size = int(batch_size / ngpus_per_node)
 
     # load val_dataset    
-    val_dataset = get_val_data(VAL_DATA_ROOT, VAL_SET, VAL_IN_LOWRES)
+    # val_dataset = get_val_data(VAL_DATA_ROOT, VAL_SET, VAL_IN_LOWRES)
 
     ############################################################################
 

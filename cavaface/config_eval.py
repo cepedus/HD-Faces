@@ -6,16 +6,16 @@ configurations = {
         
         DATA_ROOT = '../data', # the parent root where your train/val/test data are stored
         DATA_RECORD = '../data/highres_ids.txt', # the parent root where your train/val/test data are stored
-        VAL_DATA_ROOT = '../data/hres_eval_pairs', # the parent root where your val/test data are stored
+        # VAL_DATA_ROOT = '../data/hres_eval_pairs', # the parent root where your val/test data are stored
         # VAL_SET = 'lfw, cfp_fp, agedb_30, vgg2_fp', # validation set name
-        VAL_SET = 'pairs_hres', # validation set name
+        # VAL_SET = 'pairs_hres', # validation set name
         MODEL_ROOT = '../debug/model', # the root to buffer your checkpoints
         LOG_ROOT = '../debug/logs', # the root to log your train/val status
         IS_RESUME = True,
-        BACKBONE_RESUME_ROOT = "../debug/debug_lowres_144/model/Backbone_IR_SE_18_Epoch_11_Time_2021-01-29-14-12_checkpoint.pth",
+        BACKBONE_RESUME_ROOT = "../debug/debug_highlow_144/model/Backbone_IR_SE_18_Epoch_12_Time_2021-02-01-02-46_checkpoint.pth",
         HEAD_RESUME_ROOT = "",
 
-        CSV_NAME = "highres32_in_lowres144",
+        CSV_NAME = "highres144_in_highlow_144",
 
         VAL_IN_LOWRES = False, # Whether to train in 32x32 ou 144x144
         EVAL_FREQ = 2000, # when VAL_IN_LOWRES and highres training, put less than 1000
