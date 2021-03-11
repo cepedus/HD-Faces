@@ -12,10 +12,10 @@ configurations = {
         MODEL_ROOT = '../debug/model', # the root to buffer your checkpoints
         LOG_ROOT = '../debug/logs', # the root to log your train/val status
         IS_RESUME = True,
-        BACKBONE_RESUME_ROOT = "../debug/debug_highlow_144/model/Backbone_IR_SE_18_Epoch_12_Time_2021-02-01-02-46_checkpoint.pth",
+        BACKBONE_RESUME_ROOT = "../debug/debug_highres_144/model/Backbone_IR_SE_18_Epoch_12_Time_2021-02-02-18-35_checkpoint.pth",
         HEAD_RESUME_ROOT = "",
 
-        CSV_NAME = "highres32_in_highlow_144",
+        CSV_NAME = "highres144_in_highres_144",
 
         VAL_IN_LOWRES = False, # Whether to train in 32x32 ou 144x144
         EVAL_FREQ = 2000, # when VAL_IN_LOWRES and highres training, put less than 1000
