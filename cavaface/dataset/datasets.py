@@ -122,7 +122,7 @@ class FaceDataset(Dataset):
         #sample = Image.fromarray(sample)
         if self.resizer is not None:
             sample = self.resizer(sample)
-            sample = self.resizer2(sample)
+            # sample = self.resizer2(sample)
     
         if self.transform is not None:
             sample = self.transform(sample)

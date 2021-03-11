@@ -15,8 +15,8 @@ configurations = {
         BACKBONE_RESUME_ROOT = "../debug/debug_lowres_144/model/Backbone_IR_SE_18_Epoch_12_Time_2021-02-01-02-46_checkpoint.pth",
         HEAD_RESUME_ROOT = "../debug/debug_lowres_144/model/Head_ArcFace_Epoch_12_Time_2021-02-01-02-46_checkpoint.pth",
 
-        VAL_IN_LOWRES = True, # Whether to train in 32x32 ou 144x144
-        EVAL_FREQ = 2000, # when VAL_IN_LOWRES and highres training, put less than 1000
+        VAL_IN_LOWRES = False, # Whether to train in 32x32 ou 144x144
+        EVAL_FREQ = 500, # when VAL_IN_LOWRES and highres training, put less than 1000
 
 
         # IMPORTANT: with VAL_IN_LOWRES, INPUT_SIZE is defined internally in train.py

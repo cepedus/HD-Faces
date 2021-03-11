@@ -319,9 +319,17 @@ def main():
     # Freeze backbone body: only output layer is trained
     for param in backbone1.body.parameters():
         param.requires_grad = False
+    
+    # Freeze backbone input layer
+    for param in backbone1.input_layer.parameters():
+        param.requires_grad = False
 
 
     for param in backbone2.body.parameters():
+        param.requires_grad = False
+
+    # Freeze backbone input layer
+    for param in backbone2.input_layer.parameters():
         param.requires_grad = False
 
 

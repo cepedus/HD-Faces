@@ -283,9 +283,15 @@ def main():
 
 
 
-     # Freeze backbone
+    # Freeze backbone
     for param in backbone.body.parameters():
         param.requires_grad = False
+
+    # Freeze backbone input layer
+    for param in backbone.input_layer.parameters():
+        param.requires_grad = False
+
+    # Only output layer is unfrozen
     
     # ori_backbone = copy.deepcopy(backbone)
     if SYNC_BN:
