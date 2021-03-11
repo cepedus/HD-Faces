@@ -108,6 +108,7 @@ class FaceDataset(Dataset):
         elif self.isLowres and train_in_lowres:
             self.resizer = torchResize((32, 32))
         
+        # Uncomment to do highres144 -> downscale to 32 -> upscale to 144
         # self.resizer = torchResize((32, 32))
         # self.resizer2 = torchResize((144, 144))
 
@@ -121,7 +122,7 @@ class FaceDataset(Dataset):
         #sample = Image.fromarray(sample)
         if self.resizer is not None:
             sample = self.resizer(sample)
-            # sample = self.resizer2(sample)
+            sample = self.resizer2(sample)
     
         if self.transform is not None:
             sample = self.transform(sample)
